@@ -23,7 +23,6 @@ public:
     void TraverseMainProgramDir(const QString &_dirPath);
     const QString FindProgramPasportPath(const QString &_dirPath);
     void DirsCopy(const QString &_dirPathFrom, const QString &_dirPathTo);
-    void Move();
     void setPath2Kdocs(const QString &_path2Kdocs);
     void setPath2Kprgs(const QString &_path2Kprgs);
     void setPath2Kfrom(const QString &_path2Kfrom);

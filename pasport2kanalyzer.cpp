@@ -241,7 +241,6 @@ void Pasport2KAnalyzer::EjectSeries()
             preparedFirstString.append(this->firstPage_.at(pos));
         }
         preparedFirstString.remove(QRegExp("проверк.\\s*"));
-
         if (preparedFirstString.contains(QRegExp("(\\r)")))
         {
             QStringList slElements = preparedFirstString.split(QRegExp("(\\r)"));

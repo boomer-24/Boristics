@@ -96,6 +96,12 @@ void MoveHandler::TraverseMainProgramDir(const QString &_dirPath) // ДЛЯ БА
             if (QFile::exists(newPath))
                 QFile::remove(newPath);
             QString dirNameForMoving(_dirPath.split("/").last());
+            if (!dirNameForMoving.contains(QRegExp("\\d+\\s\\w")))
+            {
+                QRegExp rgxp("(\\d+)(\\w+)");
+                int pos = rgxp.indexIn(dirNameForMoving);
+                dirNameForMoving.insert(rgxp.pos(2), " ");
+            }
             for (const RowInExcelTable &row : vRows)
             {
                 excelHandler.InsertRow(row);
@@ -108,29 +114,19 @@ void MoveHandler::TraverseMainProgramDir(const QString &_dirPath) // ДЛЯ БА
                     {
                         if (testerExistingDirs.contains(testerFromPasport))
                         {
-                            QString testersArchive(this->path2Kprgs_);
-                            testersArchive.append("/").append(testerExistingDirs);
-                            QDir dir(testersArchive);
+                            QString progsArchiveOneTester(this->path2Kprgs_);
+                            progsArchiveOneTester.append("/").append(testerExistingDirs);
+                            QDir dir(progsArchiveOneTester);
                             QStringList slSeries(dir.entryList(QDir::Dirs));
-                            if (slSeries.contains(series))
-                            {
-                                testersArchive.append("/").append(series);
-                                QDir dirInsideOneSeries(testersArchive);
-                                QStringList slProgramsDir(dirInsideOneSeries.entryList(QDir::Dirs));
-                                if (!slProgramsDir.contains(dirNameForMoving))
-                                {
-                                    dir.mkdir(dirInsideOneSeries.absolutePath().append("/").append(dirNameForMoving));
-                                    this->DirsCopy(_dirPath, dirInsideOneSeries.absolutePath().append("/").append(dirNameForMoving));
-                                } else
-                                {
-
-                                }
-                            }//иначе создавать папку серии
+                            if (!slSeries.contains(series))
+                                dir.mkdir(series);
+                            QDir dirInsideOneSeries(progsArchiveOneTester + ("/") + series);
+                            QStringList slProgramsDir(dirInsideOneSeries.entryList(QDir::Dirs));
+                            while (slProgramsDir.contains(dirNameForMoving))
+                                dirNameForMoving.append("_Newer");
+                            dirInsideOneSeries.mkdir(dirInsideOneSeries.absolutePath().append("/").append(dirNameForMoving));
+                            this->DirsCopy(_dirPath, dirInsideOneSeries.absolutePath().append("/").append(dirNameForMoving));
                         }
-                        /*
-                             * ПРОВЕРЯТЬ ЕСТЬ ЛИ СЕРИЯ, ИНАЧЕ СОЗДАВАТЬ ПАПКУ
-                            */
-
                     }
             }
         } else qDebug() << _dirPath << " docx not found////////////////////////////////";
@@ -184,43 +180,23 @@ void MoveHandler::DirsCopy(const QString &_dirPathFrom, const QString &_dirPathT
         qDebug() << "No such directory : %s", dirTo.dirName();
         return;
     }
-    QString dd(this->path2Kprgs_);
-    QString ddd(_dirPathFrom);
-    ddd.remove(this->path2Kfrom_);
-    dirFrom.mkdir(dd.append("/").append(ddd));
-
     QStringList slEntryDirFrom = dirFrom.entryList(QDir::Dirs);
-    slEntryDirFrom.removeOne(".");
-    slEntryDirFrom.removeOne("..");
+    slEntryDirFrom.removeOne("."); slEntryDirFrom.removeOne("..");
     for (const QString& dirName : slEntryDirFrom)
     {
-        QString dirPath = dirFrom.absolutePath();
-        QString dirEntryPath = dirPath.append("/").append(dirName);
-
-        this->DirsCopy(dirEntryPath, _dirPathTo);
+        QString dirPathFrom = dirFrom.absolutePath();
+        QString dirEntryPath = dirPathFrom.append("/").append(dirName);
+        QString dirPathTo(_dirPathTo + "/" + dirName);
+        QDir dir(dirEntryPath);
+        dir.mkdir(dirPathTo);
+        this->DirsCopy(dirEntryPath, dirPathTo);
     }
     QStringList slEntryFiles = dirFrom.entryList(QDir::Files);
-    slEntryFiles.removeOne(".");
-    slEntryFiles.removeOne("..");
     for (const QString& fileName : slEntryFiles)
     {
-        QDir currentDir(dirFrom);
-        QString curDir(currentDir.absolutePath());
-        QFile file(curDir.append("/").append(fileName));
-        QString relativeFilePath(curDir);
-        relativeFilePath.remove(this->path2Kfrom_);
-        QString destDir(_dirPathTo);
-        destDir.append("/").append(relativeFilePath).replace("\\", "/").replace("/", "//").replace("////", "//");
-        file.copy(destDir);
+        QFile file(dirFrom.absolutePath() + "/" + fileName);
+        file.copy(_dirPathTo + "/" + fileName);
     }
-}
-
-void MoveHandler::Move()
-{
-    //    this->pathBase_ = this->pathFrom_;
-    //    this->elementName_ = this->pathBase_.split("/").last();
-    //    this->pathTo_.append("/").append(this->elementName_);
-    //    this->DirTraverse(this->pathBase_);
 }
 
 void MoveHandler::setPath2Kdocs(const QString &_path2Kdocs)
