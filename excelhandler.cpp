@@ -204,3 +204,80 @@ int ExcelHandler::GetMaxValueFromMap(QList<int> _list)
     }
     return max;
 }
+
+QPair<bool, bool> ExcelHandler::isFitDateFind(const QString &_dateFromTable, const QDate &_dateSelected)
+{
+    if (!_dateFromTable.isEmpty())
+    {
+        QStringList slDayMonthYear(_dateFromTable.split("-"));
+        if (slDayMonthYear.size() == 3)
+        {
+            QString year = slDayMonthYear.at(0);
+            QString month = slDayMonthYear.at(1);
+            QString day = slDayMonthYear.at(2);
+            if (day.size() > 2)
+                day.truncate(2);
+            QDate dateFromTable(year.toInt(), month.toInt(), day.toInt());
+            if (dateFromTable >= _dateSelected)
+                return QPair<bool, bool> (true, false);
+            else return QPair<bool, bool> (false, false);
+
+        } else return QPair<bool, bool> (false, true);
+    } else return QPair<bool, bool> (false, false);
+}
+
+QStringList ExcelHandler::getNewProgram(const QDate _dateSelected)
+{
+    if (!excelApp_->isNull())
+    {
+        QStringList slNamesElements;
+        QAxObject* sheets = this->workbook_->querySubObject("Worksheets");
+        int countSheets = sheets->property("Count").toInt();
+        for (int i = 1; i < countSheets; i++)
+        {
+            int column = 1;
+            QAxObject* sheet = sheets->querySubObject("Item(int)", i);
+            QAxObject* usedRange = sheet->querySubObject("UsedRange");
+            QAxObject* columns = usedRange->querySubObject("Columns");
+            int countColumns = columns->property("Count").toInt();
+            QAxObject* cell = sheet->querySubObject("Cells(int,int)", 2, column);
+            QVariant value = cell->property("Value");
+
+            bool next(false);
+            while (!value.toString().toUtf8().contains("Дата"))
+            {
+                column++;
+                if (column <= countColumns)
+                {
+                    cell = sheet->querySubObject("Cells(int,int)", 2, column);
+                    value = cell->property("Value");
+                } else
+                {
+                    next = true;
+                    break;
+                }
+            }
+            if (next) continue;
+            QAxObject* rows = usedRange->querySubObject("Rows");
+            int countRows = rows->property("Count").toInt();
+            for (int row = 3; row < countRows; row++)
+            {
+                QAxObject* cellDate = sheet->querySubObject("Cells(int, int)", row, column);
+                QVariant valueDate = cellDate->property("Value");
+                if (this->isFitDateFind(valueDate.toString(), _dateSelected).first)
+                {
+                    QAxObject* cellName = sheet->querySubObject("Cells(int,int)", row, 1);
+                    QVariant valueName = cellName->property("Value");
+                    slNamesElements.push_back(valueName.toString());
+                    qDebug() << valueName.toString();
+                } else if (this->isFitDateFind(valueDate.toString(), _dateSelected).second)
+                {
+                    QAxObject* cellName = sheet->querySubObject("Cells(int,int)", row, 1);
+                    QVariant valueName = cellName->property("Value");
+                    qDebug() << "fail with " << valueName << "!!!!!!!!!!!!!!!!!!";
+                }
+            }
+        }
+        return slNamesElements;
+    }
+}

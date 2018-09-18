@@ -6,13 +6,14 @@
 #include <QAxObject>
 #include <QDebug>
 #include <QMap>
+#include <QDate>
 
 class ExcelHandler
 {
 private:
     QAxObject* excelApp_;
     QAxObject* workbooks_;
-    QAxObject* workbook_;   
+    QAxObject* workbook_;
 
 public:
     ExcelHandler();
@@ -25,6 +26,8 @@ public:
     bool isFitDateCell(QAxObject *_sheet, int _row, int _column);
     QMap<QString, int> FillTestersMap(const QStringList& _slTesters, QAxObject *_sheet, int _row, int _column);
     int GetMaxValueFromMap(QList<int> _list);
+    QPair<bool, bool> isFitDateFind(const QString &_dateFromTable, const QDate &_dateSelected); //first bool - isFit date, second - isFail
+    QStringList getNewProgram(const QDate _dateSelected);
 };
 
 #endif // EXCELHANDLER_H

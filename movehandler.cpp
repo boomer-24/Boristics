@@ -89,46 +89,49 @@ void MoveHandler::TraverseMainProgramDir(const QString &_dirPath) // ДЛЯ БА
 
             docxFile.copy(newPath);
             Pasport2KAnalyzer pasport(newPath);
-            pasport.Initialize();
-            ExcelHandler excelHandler(this->path2Kexcel_);
-            const QVector<RowInExcelTable> &vRows = pasport.rowsInExcelTable();
-            pasport.QuitWord();
-            if (QFile::exists(newPath))
-                QFile::remove(newPath);
-            QString dirNameForMoving(_dirPath.split("/").last());
-            if (!dirNameForMoving.contains(QRegExp("\\d+\\s\\w")))
+            if (pasport.DocumentsCount())
             {
-                QRegExp rgxp("(\\d+)(\\w+)");
-                int pos = rgxp.indexIn(dirNameForMoving);
-                dirNameForMoving.insert(rgxp.pos(2), " ");
-            }
-            for (const RowInExcelTable &row : vRows)
-            {
-                excelHandler.InsertRow(row);
-                const QString &series(row.series());
-                const QStringList &slTestersFromPasport(row.slTesters());
-                const QStringList &slTestersExistingDirs(QDir(this->path2Kprgs_).entryList(QDir::Dirs));
+                pasport.Initialize();
+                ExcelHandler excelHandler(this->path2Kexcel_);
+                const QVector<RowInExcelTable> &vRows = pasport.rowsInExcelTable();
+                pasport.QuitWord();
+                if (QFile::exists(newPath))
+                    QFile::remove(newPath);
+                QString dirNameForMoving(_dirPath.split("/").last());
+                if (!dirNameForMoving.contains(QRegExp("\\d+\\s\\w")))
+                {
+                    QRegExp rgxp("(\\d+)(\\w+)");
+                    int pos = rgxp.indexIn(dirNameForMoving);
+                    dirNameForMoving.insert(rgxp.pos(2), " ");
+                }
+                for (const RowInExcelTable &row : vRows)
+                {
+                    excelHandler.InsertRow(row);
+                    const QString &series(row.series());
+                    const QStringList &slTestersFromPasport(row.slTesters());
+                    const QStringList &slTestersExistingDirs(QDir(this->path2Kprgs_).entryList(QDir::Dirs));
 
-                for (const QString &testerExistingDirs : slTestersExistingDirs)
-                    for (const QString &testerFromPasport : slTestersFromPasport)
-                    {
-                        if (testerExistingDirs.contains(testerFromPasport))
+                    for (const QString &testerExistingDirs : slTestersExistingDirs)
+                        for (const QString &testerFromPasport : slTestersFromPasport)
                         {
-                            QString progsArchiveOneTester(this->path2Kprgs_);
-                            progsArchiveOneTester.append("/").append(testerExistingDirs);
-                            QDir dir(progsArchiveOneTester);
-                            QStringList slSeries(dir.entryList(QDir::Dirs));
-                            if (!slSeries.contains(series))
-                                dir.mkdir(series);
-                            QDir dirInsideOneSeries(progsArchiveOneTester + ("/") + series);
-                            QStringList slProgramsDir(dirInsideOneSeries.entryList(QDir::Dirs));
-                            while (slProgramsDir.contains(dirNameForMoving))
-                                dirNameForMoving.append("_Newer");
-                            dirInsideOneSeries.mkdir(dirInsideOneSeries.absolutePath().append("/").append(dirNameForMoving));
-                            this->DirsCopy(_dirPath, dirInsideOneSeries.absolutePath().append("/").append(dirNameForMoving));
+                            if (testerExistingDirs.contains(testerFromPasport))
+                            {
+                                QString progsArchiveOneTester(this->path2Kprgs_);
+                                progsArchiveOneTester.append("/").append(testerExistingDirs);
+                                QDir dir(progsArchiveOneTester);
+                                QStringList slSeries(dir.entryList(QDir::Dirs));
+                                if (!slSeries.contains(series))
+                                    dir.mkdir(series);
+                                QDir dirInsideOneSeries(progsArchiveOneTester + ("/") + series);
+                                QStringList slProgramsDir(dirInsideOneSeries.entryList(QDir::Dirs));
+                                while (slProgramsDir.contains(dirNameForMoving))
+                                    dirNameForMoving.append("_Newer");
+                                dirInsideOneSeries.mkdir(dirInsideOneSeries.absolutePath().append("/").append(dirNameForMoving));
+                                this->DirsCopy(_dirPath, dirInsideOneSeries.absolutePath().append("/").append(dirNameForMoving));
+                            }
                         }
-                    }
-            }
+                }
+            } else qDebug() << _dirPath << " documents count == 0 =////////////////////////////////";
         } else qDebug() << _dirPath << " docx not found////////////////////////////////";
     }
 }

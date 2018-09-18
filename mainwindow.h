@@ -20,13 +20,8 @@ public:
     ~MainWindow();    
     void ProcessOnePrgDir(const QString& _prgDirPath);  // тоже нах
 
-private slots:
-    void on_pushButton_move_clicked();
-
 private:
     Ui::MainWindow *ui_;
-
-//    QString path2Kdocs_, path2Kprgs_, path2Kfrom_;
 };
 
 #endif // MAINWINDOW_H
