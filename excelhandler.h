@@ -21,6 +21,7 @@ public:
     ~ExcelHandler();
     void InsertRow(const RowInExcelTable& _row);
     void InsertTextToCell(QAxObject *_sheet, int _row, int _column, const QString& _text);
+    void InsertHyperLinkTextToCell(QAxObject *_sheet, int _row, int _column, const QString& _address, const QString& _text);
     int FindEmptyRow(QAxObject *_sheet);
     void InsertEmptyColumn(QAxObject *_sheet, int _row, int _column, QString _text);    
     bool isFitDateCell(QAxObject *_sheet, int _row, int _column);

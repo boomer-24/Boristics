@@ -1,5 +1,10 @@
 #include "rowinexceltable.h"
 
+QMap<QString, QString> RowInExcelTable::mapTesterAndDirPath() const
+{
+    return mapTesterAndDirPath_;
+}
+
 RowInExcelTable::RowInExcelTable()
 {
 
@@ -30,6 +35,13 @@ RowInExcelTable::RowInExcelTable(const QString &_series, const QString &_name, c
     this->TYcorrection_ = _TYcorrection;
     this->date_ = _date;
     this->slTesters_ = _slTesters;
+    for (const QString& tester : _slTesters)
+        this->mapTesterAndDirPath_.insert(tester, "");
+}
+
+void RowInExcelTable::InsertDirPathToTestersMap(const QString &_tester, const QString &_dirPath)
+{
+    this->mapTesterAndDirPath_.insert(_tester, _dirPath);
 }
 
 QString RowInExcelTable::series() const

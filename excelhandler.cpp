@@ -63,19 +63,25 @@ void ExcelHandler::InsertRow(const RowInExcelTable &_row)
                         mapTestersColumns = this->FillTestersMap(_row.slTesters(), sheet, rowCounter + 1, columnCounter);
                 }
             int rowForInsertion = this->FindEmptyRow(sheet);
-            if (rowForInsertion) this->InsertTextToCell(sheet, rowForInsertion, columnName, _row.name());
-            if (rowForInsertion) this->InsertTextToCell(sheet, rowForInsertion, columnCondition, "Используется");
-            if (rowForInsertion) this->InsertTextToCell(sheet, rowForInsertion, columnKY, _row.KY());
-            if (rowForInsertion) this->InsertTextToCell(sheet, rowForInsertion, columnDeveloper, _row.author());
-            if (rowForInsertion) this->InsertTextToCell(sheet, rowForInsertion, columnTY, _row.TY());
-            if (rowForInsertion) this->InsertTextToCell(sheet, rowForInsertion, columnTYcorrection, _row.TYcorrection());
-            if (rowForInsertion) this->InsertTextToCell(sheet, rowForInsertion, columnDate, _row.date());
-            for (QString key : mapTestersColumns.keys())
+            if (rowForInsertion)
             {
-                if (_row.slTesters().contains(key))
-                    this->InsertTextToCell(sheet, rowForInsertion, mapTestersColumns.value(key), "+");
-                else
-                    this->InsertTextToCell(sheet, rowForInsertion, mapTestersColumns.value(key), "-");
+                this->InsertTextToCell(sheet, rowForInsertion, columnName, _row.name());
+                this->InsertTextToCell(sheet, rowForInsertion, columnCondition, "Используется");
+                this->InsertTextToCell(sheet, rowForInsertion, columnKY, _row.KY());
+                this->InsertTextToCell(sheet, rowForInsertion, columnDeveloper, _row.author());
+                this->InsertTextToCell(sheet, rowForInsertion, columnTY, _row.TY());
+                this->InsertTextToCell(sheet, rowForInsertion, columnTYcorrection, _row.TYcorrection());
+                this->InsertTextToCell(sheet, rowForInsertion, columnDate, _row.date());
+                for (QString key : mapTestersColumns.keys())
+                {
+                    if (_row.slTesters().contains(key))
+                        this->InsertHyperLinkTextToCell(sheet,
+                                                        rowForInsertion, mapTestersColumns.value(key),
+                                                        _row.mapTesterAndDirPath().value(key), "+");
+//                        this->InsertTextToCell(sheet, rowForInsertion, mapTestersColumns.value(key), "+");
+                    else
+                        this->InsertTextToCell(sheet, rowForInsertion, mapTestersColumns.value(key), "-");
+                }
             }
         }
     } if (!foundSeries)
@@ -89,6 +95,19 @@ void ExcelHandler::InsertTextToCell(QAxObject* _sheet, int _row, int _column, co
         QAxObject* cellIns = _sheet->querySubObject("Cells(int,int)", _row, _column);
         cellIns->setProperty("Value", QVariant(_text));
     }
+}
+
+void ExcelHandler::InsertHyperLinkTextToCell(QAxObject *_sheet, int _row, int _column, const QString &_address, const QString &_text)
+{
+    QString alphabet(" ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    QString request("Range(\"");
+    request.append(alphabet.at(_column)).append(QString::number(_row)).append("\")");
+
+    QAxObject* hLinks = _sheet->querySubObject("HyperLinks");
+    QAxObject* sheetRange = _sheet->querySubObject(request.toStdString().data());
+    QAxObject* link = hLinks->querySubObject("Add(Object, String))", sheetRange->asVariant(), _address);
+    link->setProperty("TextToDisplay", "+");
+
 }
 
 int ExcelHandler::FindEmptyRow(QAxObject *_sheet)
@@ -134,7 +153,7 @@ int ExcelHandler::FindEmptyRow(QAxObject *_sheet)
 void ExcelHandler::InsertEmptyColumn(QAxObject *_sheet, int _row, int _column, QString _text)
 {
     QString alphabet(" ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-    QString request("Range(\""); // C9\")
+    QString request("Range(\"");
     request.append(alphabet.at(_column)).append(QString::number(_row)).append("\")");
     QAxObject* sheetRange = _sheet->querySubObject(request.toStdString().data());
 

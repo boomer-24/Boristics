@@ -104,12 +104,12 @@ void MoveHandler::TraverseMainProgramDir(const QString &_dirPath) // ДЛЯ БА
                     int pos = rgxp.indexIn(dirNameForMoving);
                     dirNameForMoving.insert(rgxp.pos(2), " ");
                 }
-                for (const RowInExcelTable &row : vRows)
+                for (RowInExcelTable row : vRows)
                 {
-                    excelHandler.InsertRow(row);
+                    //    excelHandler.InsertRow(row);
                     const QString &series(row.series());
                     const QStringList &slTestersFromPasport(row.slTesters());
-                    const QStringList &slTestersExistingDirs(QDir(this->path2Kprgs_).entryList(QDir::Dirs));
+                    const QStringList &slTestersExistingDirs(QDir(this->path2Kprgs_).entryList(QDir::Dirs));//nodotanddotdot
 
                     for (const QString &testerExistingDirs : slTestersExistingDirs)
                         for (const QString &testerFromPasport : slTestersFromPasport)
@@ -126,10 +126,13 @@ void MoveHandler::TraverseMainProgramDir(const QString &_dirPath) // ДЛЯ БА
                                 QStringList slProgramsDir(dirInsideOneSeries.entryList(QDir::Dirs));
                                 while (slProgramsDir.contains(dirNameForMoving))
                                     dirNameForMoving.append("_Newer");
-                                dirInsideOneSeries.mkdir(dirInsideOneSeries.absolutePath().append("/").append(dirNameForMoving));
-                                this->DirsCopy(_dirPath, dirInsideOneSeries.absolutePath().append("/").append(dirNameForMoving));
+                                QString finishPath(dirInsideOneSeries.absolutePath().append("/").append(dirNameForMoving));
+                                dirInsideOneSeries.mkdir(finishPath);
+                                this->DirsCopy(_dirPath, finishPath);
+                                row.InsertDirPathToTestersMap(testerFromPasport, finishPath);
                             }
                         }
+                    excelHandler.InsertRow(row);
                 }
             } else qDebug() << _dirPath << " documents count == 0 =////////////////////////////////";
         } else qDebug() << _dirPath << " docx not found////////////////////////////////";
