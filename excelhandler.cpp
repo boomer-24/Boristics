@@ -254,6 +254,7 @@ QStringList ExcelHandler::getNewProgram(const QDate _dateSelected)
         int countSheets = sheets->property("Count").toInt();
         for (int i = 1; i < countSheets; i++)
         {
+
             int column = 1;
             QAxObject* sheet = sheets->querySubObject("Item(int)", i);
             QAxObject* usedRange = sheet->querySubObject("UsedRange");
@@ -288,12 +289,12 @@ QStringList ExcelHandler::getNewProgram(const QDate _dateSelected)
                     QAxObject* cellName = sheet->querySubObject("Cells(int,int)", row, 1);
                     QVariant valueName = cellName->property("Value");
                     slNamesElements.push_back(valueName.toString());
-                    qDebug() << valueName.toString();
+//                    qDebug() << valueName.toString();
                 } else if (this->isFitDateFind(valueDate.toString(), _dateSelected).second)
                 {
                     QAxObject* cellName = sheet->querySubObject("Cells(int,int)", row, 1);
                     QVariant valueName = cellName->property("Value");
-                    qDebug() << "fail with " << valueName << "!!!!!!!!!!!!!!!!!!";
+                    qDebug() << "fail with " << valueName.toString() << "!!!!!!!!!!!!!!!!!!";
                 }
             }
         }

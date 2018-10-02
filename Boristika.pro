@@ -27,13 +27,13 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     rowinexceltable.cpp \
     excelhandler.cpp \
-    pasport2kanalyzer.cpp \
+    passport2kanalyzer.cpp \
     movehandler.cpp
 
 HEADERS  += mainwindow.h \
     rowinexceltable.h \
     excelhandler.h \
-    pasport2kanalyzer.h \
+    passport2kanalyzer.h \
     movehandler.h
 
 FORMS    += mainwindow.ui
