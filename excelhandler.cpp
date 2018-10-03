@@ -1,11 +1,11 @@
 #include "excelhandler.h"
 
-ExcelHandler::ExcelHandler()
+ExcelHandler::ExcelHandler(QObject *parent) : QObject(parent)
 {
 
 }
 
-ExcelHandler::ExcelHandler(const QString &_excelPath)
+ExcelHandler::ExcelHandler(QObject *parent, const QString &_excelPath) : QObject(parent)
 {
     this->excelApp_ = new QAxObject("Excel.Application", 0);
     this->workbooks_ = excelApp_->querySubObject("Workbooks");
@@ -78,14 +78,13 @@ void ExcelHandler::InsertRow(const RowInExcelTable &_row)
                         this->InsertHyperLinkTextToCell(sheet,
                                                         rowForInsertion, mapTestersColumns.value(key),
                                                         _row.mapTesterAndDirPath().value(key), "+");
-//                        this->InsertTextToCell(sheet, rowForInsertion, mapTestersColumns.value(key), "+");
                     else
                         this->InsertTextToCell(sheet, rowForInsertion, mapTestersColumns.value(key), "-");
                 }
             }
         }
     } if (!foundSeries)
-        qDebug() << "series " << series << " not exist";
+        emit this->signalSeriesNotExist(QString("Серии ").append(series).append(" нет в таблице. Создай такой лист вручную"));
 }
 
 void ExcelHandler::InsertTextToCell(QAxObject* _sheet, int _row, int _column, const QString &_text)
@@ -245,18 +244,17 @@ QPair<bool, bool> ExcelHandler::isFitDateFind(const QString &_dateFromTable, con
     } else return QPair<bool, bool> (false, false);
 }
 
-QStringList ExcelHandler::getNewProgram(const QDate _dateSelected)
+void ExcelHandler::getNewProgram(const QDate _dateSelected)
 {
     if (!excelApp_->isNull())
-    {
-        QStringList slNamesElements;
+    {        
         QAxObject* sheets = this->workbook_->querySubObject("Worksheets");
         int countSheets = sheets->property("Count").toInt();
         for (int i = 1; i < countSheets; i++)
         {
-
             int column = 1;
             QAxObject* sheet = sheets->querySubObject("Item(int)", i);
+            emit this->signalCurrentSheetToUI(sheet->property("Name").toString());
             QAxObject* usedRange = sheet->querySubObject("UsedRange");
             QAxObject* columns = usedRange->querySubObject("Columns");
             int countColumns = columns->property("Count").toInt();
@@ -288,16 +286,15 @@ QStringList ExcelHandler::getNewProgram(const QDate _dateSelected)
                 {
                     QAxObject* cellName = sheet->querySubObject("Cells(int,int)", row, 1);
                     QVariant valueName = cellName->property("Value");
-                    slNamesElements.push_back(valueName.toString());
-//                    qDebug() << valueName.toString();
+                    emit this->signalInfoToUInewProgramTextBox(valueName.toString());
+//                    slNamesElements.push_back(valueName.toString());
                 } else if (this->isFitDateFind(valueDate.toString(), _dateSelected).second)
                 {
                     QAxObject* cellName = sheet->querySubObject("Cells(int,int)", row, 1);
                     QVariant valueName = cellName->property("Value");
-                    qDebug() << "fail with " << valueName.toString() << "!!!!!!!!!!!!!!!!!!";
+                    emit this->signalInfoToUInewProgramFailTextBox(QString("fail with ").append(valueName.toString()));
                 }
             }
-        }
-        return slNamesElements;
+        }        
     }
 }

@@ -3,21 +3,23 @@
 
 #include "rowinexceltable.h"
 
+#include <QObject>
 #include <QAxObject>
 #include <QDebug>
 #include <QMap>
 #include <QDate>
 
-class ExcelHandler
+class ExcelHandler : public QObject
 {
+    Q_OBJECT
 private:
     QAxObject* excelApp_;
     QAxObject* workbooks_;
     QAxObject* workbook_;
 
 public:
-    ExcelHandler();
-    ExcelHandler(const QString& _excelPath);
+    ExcelHandler(QObject *parent = 0);
+    ExcelHandler(QObject *parent, const QString& _excelPath);
     ~ExcelHandler();
     void InsertRow(const RowInExcelTable& _row);
     void InsertTextToCell(QAxObject *_sheet, int _row, int _column, const QString& _text);
@@ -28,7 +30,12 @@ public:
     QMap<QString, int> FillTestersMap(const QStringList& _slTesters, QAxObject *_sheet, int _row, int _column);
     int GetMaxValueFromMap(QList<int> _list);
     QPair<bool, bool> isFitDateFind(const QString &_dateFromTable, const QDate &_dateSelected); //first bool - isFit date, second - isFail
-    QStringList getNewProgram(const QDate _dateSelected);
+    void getNewProgram(const QDate _dateSelected);
+signals:
+    void signalSeriesNotExist(const QString& _info);
+    void signalInfoToUInewProgramTextBox(QString _info);
+    void signalInfoToUInewProgramFailTextBox(QString _infoError);
+    void signalCurrentSheetToUI(QString _info);
 };
 
 #endif // EXCELHANDLER_H

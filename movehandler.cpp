@@ -1,9 +1,9 @@
 #include "movehandler.h"
 
-
 MoveHandler::MoveHandler(QObject *parent) : QObject(parent)
 {    
     emit this->signalStart();
+    this->isExcelBusy_ = false;
 }
 
 MoveHandler::~MoveHandler()
@@ -62,9 +62,11 @@ void MoveHandler::TraverseArchiveDir()
             qDebug() << "No such directory : %s", dir.dirName();
         else
         {
+            emit this->signalProgressToUI(0);
             QStringList slEntryDir = dir.entryList(QDir::Dirs);
             slEntryDir.removeOne(".");
             slEntryDir.removeOne("..");
+            this->isExcelBusy_ = true;
             for (int i = 0; i < slEntryDir.size(); i++)
             {
                 const QString& dirName = slEntryDir.at(i);
@@ -72,8 +74,9 @@ void MoveHandler::TraverseArchiveDir()
                 QString dirEntryPath = dirPath.append("/").append(dirName);
                 if (this->TraverseMainProgramDir(dirEntryPath))
                     dir.rmdir(dirEntryPath);
-                emit signalProgressToUI(((i + 1) * 100) / slEntryDir.size());
+                emit this->signalProgressToUI(((i + 1) * 100) / slEntryDir.size());
             }
+            this->isExcelBusy_ = false;
             emit this->signalInfoToUItrueTextBox("!!! ОБРАБОТКА ОФОРМИТЬ И В АРХИВ ЗАВЕРШЕНА !!!");
             emit this->signalTraverseArchiveComplete();
         }
@@ -89,9 +92,11 @@ void MoveHandler::TraverseArchiveDir(const QString &_dirPath) //    ПЕРЕДА
             qDebug() << "No such directory : %s", dir.dirName();
         else
         {
+            emit this->signalProgressToUI(0);
             QStringList slEntryDir = dir.entryList(QDir::Dirs);
             slEntryDir.removeOne(".");
             slEntryDir.removeOne("..");
+            this->isExcelBusy_ = true;
             for (int i = 0; i < slEntryDir.size(); i++)
             {
                 const QString& dirName = slEntryDir.at(i);
@@ -99,8 +104,9 @@ void MoveHandler::TraverseArchiveDir(const QString &_dirPath) //    ПЕРЕДА
                 QString dirEntryPath = dirPath.append("/").append(dirName);
                 if (this->TraverseMainProgramDir(dirEntryPath))
                     dir.rmdir(dirEntryPath);
-                emit signalProgressToUI(((i + 1) * 100) / slEntryDir.size());
+                emit this->signalProgressToUI(((i + 1) * 100) / slEntryDir.size());
             }
+            this->isExcelBusy_ = false;
             emit this->signalInfoToUItrueTextBox("!!! ОБРАБОТКА ОФОРМИТЬ И В АРХИВ ЗАВЕРШЕНА !!!");
             emit this->signalTraverseArchiveComplete();
         }
@@ -129,13 +135,16 @@ bool MoveHandler::TraverseMainProgramDir(const QString &_dirPath) // ДЛЯ БА
             if (ini == 0 || 1)
             {
                 Passport2KAnalyzer Passport;
-                QObject::connect(&Passport, SIGNAL(signalInfoToUIfailTextBox(QString)), this, SIGNAL(signalToUIfailTextBox(QString)));
+                QObject::connect(&Passport, SIGNAL(signalInfoToUIfailTextBox(QString)),
+                                 this, SIGNAL(signalToUIfailTextBox(QString)));
                 if (Passport.Run(newPath))
                 {
                     if (Passport.DocumentsCount())
                     {
                         Passport.Initialize();
-                        ExcelHandler excelHandler(this->path2Kexcel_);
+                        ExcelHandler excelHandler(this, this->path2Kexcel_);
+                        QObject::connect(&excelHandler, SIGNAL(signalSeriesNotExist(QString)),
+                                         this, SIGNAL(signalToUIfailTextBox(QString)));
                         const QVector<RowInExcelTable> &vRows = Passport.rowsInExcelTable();
                         Passport.QuitWord();
                         this->PassportCopy(docxPath, vRows.first().series());
@@ -306,6 +315,17 @@ void MoveHandler::setPath2Kfrom(const QString &_path2Kfrom)
 
 void MoveHandler::slotStartOperations()
 {
+
     Initialize(QCoreApplication::applicationDirPath().append("/ini.xml"));
     TraverseArchiveDir();
+}
+
+QString MoveHandler::path2Kexcel() const
+{
+    return path2Kexcel_;
+}
+
+bool MoveHandler::isExcelBusy() const
+{
+    return isExcelBusy_;
 }

@@ -14,7 +14,8 @@ class MoveHandler : public QObject
 {
     Q_OBJECT
 private:
-    QString path2Kfrom_, path2Kdocs_, path2Kprgs_, path2Kexcel_;    
+    QString path2Kfrom_, path2Kdocs_, path2Kprgs_, path2Kexcel_;
+    bool isExcelBusy_;
 
 public:
     explicit MoveHandler(QObject *parent = 0);
@@ -30,6 +31,8 @@ public:
     void setPath2Kdocs(const QString &_path2Kdocs);
     void setPath2Kprgs(const QString &_path2Kprgs);
     void setPath2Kfrom(const QString &_path2Kfrom);
+    QString path2Kexcel() const;
+    bool isExcelBusy() const;
 
 public slots:
     void slotStartOperations();

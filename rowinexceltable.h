@@ -18,6 +18,7 @@ public:
                     const QString& _author, const QString& _TY, const QString& _TYcorrection,
                     const QString& _date, const QStringList& _slTesters);
     void InsertDirPathToTestersMap(const QString& _tester, const QString& _dirPath);
+    QMap<QString, QString> mapTesterAndDirPath() const;
     QString series() const;
     QString name() const;
     QString KY() const;
@@ -26,7 +27,6 @@ public:
     QString TYcorrection() const;
     QString date() const;
     const QStringList &slTesters() const;
-    QMap<QString, QString> mapTesterAndDirPath() const;
 };
 
 #endif // ROWINEXCELTABLE_H
