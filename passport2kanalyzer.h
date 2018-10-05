@@ -21,7 +21,8 @@ private:
 
     QString firstPage_;
 
-    bool developerMarker_ = false;    
+    bool developerMarker_ = false;
+    bool isQuit_ = false;
 
     QStringList slTesters_, slNames_;
     QString TY_, TYcorrection_, KY_, developer_, series_, name_;

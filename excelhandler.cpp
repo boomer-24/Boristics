@@ -287,7 +287,6 @@ void ExcelHandler::getNewProgram(const QDate _dateSelected)
                     QAxObject* cellName = sheet->querySubObject("Cells(int,int)", row, 1);
                     QVariant valueName = cellName->property("Value");
                     emit this->signalInfoToUInewProgramTextBox(valueName.toString());
-//                    slNamesElements.push_back(valueName.toString());
                 } else if (this->isFitDateFind(valueDate.toString(), _dateSelected).second)
                 {
                     QAxObject* cellName = sheet->querySubObject("Cells(int,int)", row, 1);

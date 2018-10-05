@@ -25,41 +25,32 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui_(new Ui::MainW
                      this, SLOT(iconActivated(QSystemTrayIcon::ActivationReason)));
 
     this->Initialize(QCoreApplication::applicationDirPath().append("/ini.xml"));
+    this->AutoRun(this->autorun_);
 
     this->thread_ = new QThread(this);
     this->MH_ = new MoveHandler();
     QObject::connect(this, SIGNAL(signalStartOperation()), this->MH_, SLOT(slotStartOperations()));
-    //    QObject::connect(this, SIGNAL(signalStartOperation()), this->ui_->pushButton_go, SLOT(hide()));
-    QObject::connect(this->MH_, SIGNAL(signalFinish()), this->ui_->pushButton_go, SLOT(show()));
-    QObject::connect(this->MH_, SIGNAL(signalStart()), this->thread_, SLOT(start()));
-    QObject::connect(this, SIGNAL(destroyed(QObject*)), this->thread_, SLOT(quit()));
     QObject::connect(this->MH_, SIGNAL(signalInfoToUItrueTextBox(QString)), this, SLOT(slotInfoToUItrueTextBox(QString)));
-    QObject::connect(this->MH_, SIGNAL(signalToUIfailTextBox(QString)), this, SLOT(slotInfoToUIfailTextBox(QString)));
-    QObject::connect(this->MH_, SIGNAL(signalStart()), this->ui_->pushButton_go, SLOT(hide()));
-    QObject::connect(this->MH_, SIGNAL(signalFinish()), this->ui_->pushButton_go, SLOT(show()));
-    QObject::connect(this->MH_, SIGNAL(signalFinish()), this->thread_, SLOT(quit()));
+    QObject::connect(this->MH_, SIGNAL(signalInfoToUIfailTextBox(QString)), this, SLOT(slotInfoToUIfailTextBox(QString)));
     QObject::connect(this->MH_, SIGNAL(signalTraverseArchiveComplete()), this->ui_->pushButton_go, SLOT(show()));
     QObject::connect(this->MH_, SIGNAL(signalProgressToUI(int)), this->ui_->progressBar, SLOT(setValue(int)));
-
-    this->MH_->moveToThread(this->thread_);
     this->thread_->start();
+    this->MH_->moveToThread(this->thread_);
 
     this->threadNewPrograms_ = new QThread(this);
     this->FNP_ = new FinderNewPrograms();
     QObject::connect(this, SIGNAL(signalStartOperationFindNewProgram(QString,QDate)),
                      this->FNP_, SLOT(slotStartOperation(QString,QDate)));
-    QObject::connect(this, SIGNAL(signalStartOperationFindNewProgram()), this->ui_->pushButton_getNewPrograms, SLOT(hide()));
-    QObject::connect(this->FNP_, SIGNAL(signalStart()), this->ui_->pushButton_getNewPrograms, SLOT(hide()));
-    QObject::connect(this->FNP_, SIGNAL(signalFinish()), this->ui_->pushButton_getNewPrograms, SLOT(show()));
-    QObject::connect(this->FNP_, SIGNAL(signalStart()), this->threadNewPrograms_, SLOT(start()));
-    QObject::connect(this, SIGNAL(destroyed(QObject*)), this->threadNewPrograms_, SLOT(quit()));
-    //    QObject::connect(this->FNP_, SIGNAL(signalInfoToUInewProgramTrueTextBox(QString)),
-    //                     this->ui_->textBrowser_newPrograms, SLOT(append(QString)));
+    QObject::connect(this->FNP_, SIGNAL(signalInfoToUInewProgramTrueTextBox(QString)),
+                     this, SLOT(slotAppendToNewProgram(QString)));
     QObject::connect(this->FNP_, SIGNAL(signalInfoToUInewProgramFailTextBox(QString)),
                      this->ui_->textBrowser_fails, SLOT(append(QString)));
-    QObject::connect(this->FNP_, SIGNAL(signalFinish()), this->threadNewPrograms_, SLOT(quit()));
     QObject::connect(this->FNP_, SIGNAL(signalCurrentSheetToUI(QString)),
                      this, SLOT(slotObtainCurrentSheetForUI(QString)));
+    QObject::connect(this->FNP_, SIGNAL(signalSearchNewProgramComplete()),
+                     this->ui_->pushButton_getNewPrograms, SLOT(show()));
+    QObject::connect(this->FNP_, SIGNAL(signalSearchNewProgramComplete()),
+                     this->ui_->label_currentSeries, SLOT(clear()));
 
     this->FNP_->moveToThread(this->threadNewPrograms_);
     this->threadNewPrograms_->start();
@@ -68,7 +59,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui_(new Ui::MainW
 MainWindow::~MainWindow()
 {
     delete this->MH_;
-    //    delete this->thread_;
+    this->thread_->quit();
+    this->threadNewPrograms_->quit();
+    //        delete this->thread_; //НЕ ПОНЯЛ ПОКА ПОЧЕМУ, НО ТАК ДЕЛАТЬ НЕ СТОИТ
     delete ui_;
 }
 
@@ -104,6 +97,11 @@ void MainWindow::Initialize(const QString &_xmlPath)
                         else if (domElement.tagName() == "excel2K")
                         {
                             this->path2Kexcel_ = domElement.text();
+                        }
+                        else if (domElement.tagName() == "autorun")
+                        {
+                            QString autorunStr(domElement.text());
+                            this->autorun_ = autorunStr.toInt();
                         }
                         else qDebug() << "Tag ne found";
                     }
@@ -181,6 +179,33 @@ void MainWindow::on_pushButton_getNewPrograms_clicked()
 {
     if (!this->MH_->isExcelBusy())
     {
+        QString AppPath(QCoreApplication::applicationDirPath());
+        AppPath.append("/tasklist.txt");
+        QString query("tasklist > ");
+        query.append(AppPath);
+        system(query.toStdString().data());
+        QFile file(AppPath);
+        if (file.open(QIODevice::ReadOnly))
+        {
+            QByteArray data;
+            data = file.readAll();
+            QString str(data);
+            str = str.toLower();
+            if (str.contains("excel"))
+            {
+                QMessageBox::StandardButton reply = QMessageBox::warning(this, "\\m/", "Для дальнейшей работы закрой програму Excel!");
+                return;
+            }
+        } else
+        {
+            QMessageBox::StandardButton reply = QMessageBox::warning(this, "\\m/", "tasklist не считан. Обратись к создателю.");
+            return;
+        }
+        if (this->ui_->calendarWidget->selectedDate() > QDate::currentDate())
+        {
+            QMessageBox::StandardButton reply = QMessageBox::warning(this, "\\m/", "Выбрана дата будущего. Странно.");
+            return;
+        }
         if (this->ui_->calendarWidget->selectedDate() == QDate::currentDate())
         {
             QMessageBox::StandardButton reply = QMessageBox::question(this, "\\m/", "Поиск будет с сегодняшней даты. Продолжить?",
@@ -188,6 +213,7 @@ void MainWindow::on_pushButton_getNewPrograms_clicked()
             if (reply == QMessageBox::No)
                 return;
         }
+        this->ui_->pushButton_getNewPrograms->hide();
         emit this->signalStartOperationFindNewProgram("C:/Users/user/Desktop/BORIS/БД F2K.xls",
                                                       this->ui_->calendarWidget->selectedDate());
 
@@ -197,47 +223,44 @@ void MainWindow::on_pushButton_getNewPrograms_clicked()
 
 }
 
-void MainWindow::slotInfoToUItrueTextBox(QString info)
-{    
-    this->ui_->textBrowser_success->append(info);
-}
-
-void MainWindow::slotInfoToUIfailTextBox(QString infoError)
-{
-    this->ui_->textBrowser_complaints->append(infoError);
-}
-
-void MainWindow::slotAppendToNewProgram(QString infoNewProgram)
-{
-    this->ui_->textBrowser_newPrograms->append(infoNewProgram);
-}
-
-void MainWindow::slotAppendToNewProgramFail(QString _infoNewProgramFail)
-{
-    this->ui_->textBrowser_fails->append(_infoNewProgramFail);
-}
-
-void MainWindow::slotObtainCurrentSheetForUI(QString _element)
-{
-    this->ui_->label_currentElement->setText(_element);
-    this->ui_->textBrowser_newPrograms->append(_element);
-
-//    QString element("элемент");
-//    QString amount(QString::number(sl.size()));
-//    QString lastCharacter(amount.at(amount.size() - 1));
-//    if (lastCharacter.contains(QRegExp("([5-9]|0){1,1}")))
-//        element.append("ов");
-//    else if (lastCharacter.contains(QRegExp("[2-4]{1,1}")))
-//        element.append("а");
-//    this->ui_->label_amountNewElements->setText(amount.append(" ").append(element));
-//    for (const QString& str : sl)
-//        this->ui_->textBrowser_newPrograms->append(str);
-}
-
 void MainWindow::on_pushButton_go_clicked()
 {
     if (!this->FNP_->isExcelBusy())
     {
+        QString AppPath(QCoreApplication::applicationDirPath());
+        AppPath.append("/tasklist.txt");
+        QString query("tasklist > ");
+        query.append(AppPath);
+        system(query.toStdString().data());
+        QFile file(AppPath);
+        if (file.open(QIODevice::ReadOnly))
+        {
+            QByteArray data;
+            data = file.readAll();
+            QString str(data);
+            str = str.toLower();
+            if (str.contains("excel") && str.contains("word"))
+            {
+                QMessageBox::StandardButton reply = QMessageBox::warning(this, "\\m/", "Для дальнейшей работы закрой програмы Excel и Word!");
+                return;
+            }
+            if (str.contains("excel"))
+            {
+                QMessageBox::StandardButton reply = QMessageBox::warning(this, "\\m/", "Для дальнейшей работы закрой програму Excel!");
+                return;
+            }
+            if (str.contains("word"))
+            {
+                QMessageBox::StandardButton reply = QMessageBox::warning(this, "\\m/", "Для дальнейшей работы закрой програму Word!");
+                return;
+            }
+        } else
+        {
+            QMessageBox::StandardButton reply = QMessageBox::warning(this, "\\m/", "tasklist не считан. Обратись к создателю.");
+            return;
+        }
+
+        this->ui_->pushButton_go->hide();
         emit this->signalStartOperation();
     } else
         QMessageBox::StandardButton reply = QMessageBox::warning(this, "\\m/", "Сейчас производится поиск новых программ. "
@@ -247,4 +270,57 @@ void MainWindow::on_pushButton_go_clicked()
 void MainWindow::on_pushButton_clearNewProgramsTextBox_clicked()
 {
     this->ui_->textBrowser_newPrograms->clear();
+    this->ui_->label_amountNewElements->clear();
+    this->ui_->label_amountNewElementsText->clear();
+}
+
+void MainWindow::slotInfoToUItrueTextBox(const QString &_info)
+{    
+    this->ui_->textBrowser_success->append(_info);
+}
+
+void MainWindow::slotInfoToUIfailTextBox(const QString &_infoError)
+{
+    this->ui_->textBrowser_complaints->append(_infoError);
+}
+
+void MainWindow::slotAppendToNewProgram(const QString &_infoNewProgram)
+{
+    this->ui_->textBrowser_newPrograms->append(_infoNewProgram);
+    int amount = this->ui_->label_amountNewElements->text().toInt();
+    amount++;
+    this->ui_->label_amountNewElements->setNum(amount);
+    QString amountStr(QString::number(amount));
+    QString element("элемент");
+    QString lastCharacter(amountStr.at(amountStr.size() - 1));
+    if (lastCharacter.contains(QRegExp("([5-9]|0){1,1}")))
+        element.append("ов");
+    else if (lastCharacter.contains(QRegExp("[2-4]{1,1}")))
+        element.append("а");
+    this->ui_->label_amountNewElementsText->setText(element);
+}
+
+void MainWindow::slotAppendToNewProgramFail(const QString &_infoNewProgramFail)
+{
+    this->ui_->textBrowser_fails->append(_infoNewProgramFail);
+}
+
+void MainWindow::slotObtainCurrentSheetForUI(const QString &_element)
+{
+    this->ui_->label_currentSeries->setText(_element);
+}
+
+void MainWindow::AutoRun(bool _isAutorun)
+{
+    if (_isAutorun)
+    {
+        QSettings setting("HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", QSettings::NativeFormat);
+        setting.setValue("BoristikApp", QDir::toNativeSeparators(QApplication::applicationFilePath()));
+        setting.sync();
+    } else
+    {
+        QSettings setting("HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", QSettings::NativeFormat);
+        setting.setValue("BoristikApp", QDir::toNativeSeparators(QApplication::applicationFilePath()));
+        setting.remove("BoristikApp");
+    }
 }

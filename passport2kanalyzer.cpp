@@ -2,11 +2,12 @@
 
 Passport2KAnalyzer::Passport2KAnalyzer(QObject *parent) : QObject(parent)
 {
-
+    this->isQuit_ = false;
 }
 
 Passport2KAnalyzer::Passport2KAnalyzer(QObject *parent, const QString &_docxPath) : QObject(parent)
 {
+    this->isQuit_ = false;
     //    this->WordApp_ = new QAxObject("Word.Application");
     //    if (!this->WordApp_)
     //        qDebug() << "WordApp fall";
@@ -20,6 +21,8 @@ Passport2KAnalyzer::Passport2KAnalyzer(QObject *parent, const QString &_docxPath
 
 Passport2KAnalyzer::~Passport2KAnalyzer()
 {    
+    if (!isQuit_)
+        this->WordApp_->dynamicCall("Quit()");
     ////    if (this->Table_)
     ////        delete this->Table_;
     //    //    if (this->Documents_)
@@ -48,6 +51,7 @@ bool Passport2KAnalyzer::Run(const QString &_docxPath)
 
 void Passport2KAnalyzer::QuitWord()
 {
+    this->isQuit_ = true;
     this->WordApp_->dynamicCall("Quit()");
     //    auto ini = CoInitializeEx(NULL, COINIT_MULTITHREADED );
     //    if (this->WordApp_)

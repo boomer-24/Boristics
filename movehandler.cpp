@@ -2,13 +2,13 @@
 
 MoveHandler::MoveHandler(QObject *parent) : QObject(parent)
 {    
-    emit this->signalStart();
+    Initialize(QCoreApplication::applicationDirPath().append("/ini.xml"));
     this->isExcelBusy_ = false;
 }
 
 MoveHandler::~MoveHandler()
 {
-    emit this->signalFinish();
+
 }
 
 void MoveHandler::Initialize(const QString &_xmlPath)
@@ -54,7 +54,7 @@ void MoveHandler::Initialize(const QString &_xmlPath)
 }
 
 void MoveHandler::TraverseArchiveDir()
-{
+{    
     if (!this->path2Kfrom_.isEmpty())
     {
         const QDir dir(this->path2Kfrom_);
@@ -80,7 +80,7 @@ void MoveHandler::TraverseArchiveDir()
             emit this->signalInfoToUItrueTextBox("!!! ОБРАБОТКА ОФОРМИТЬ И В АРХИВ ЗАВЕРШЕНА !!!");
             emit this->signalTraverseArchiveComplete();
         }
-    } else emit this->signalToUIfailTextBox("Укажи в ini.xml путь к \"ОФОРМИТЬ И В АРХИВ\"");
+    } else emit this->signalInfoToUIfailTextBox("Укажи в ini.xml путь к \"ОФОРМИТЬ И В АРХИВ\"");
 }
 
 void MoveHandler::TraverseArchiveDir(const QString &_dirPath) //    ПЕРЕДАВАТЬ ПАПКУ ОФОРМИТЬ И В АРХИВ/2К
@@ -110,7 +110,7 @@ void MoveHandler::TraverseArchiveDir(const QString &_dirPath) //    ПЕРЕДА
             emit this->signalInfoToUItrueTextBox("!!! ОБРАБОТКА ОФОРМИТЬ И В АРХИВ ЗАВЕРШЕНА !!!");
             emit this->signalTraverseArchiveComplete();
         }
-    } else emit this->signalToUIfailTextBox("Укажи в ini.xml путь к \"ОФОРМИТЬ И В АРХИВ\"");
+    } else emit this->signalInfoToUIfailTextBox("Укажи в ini.xml путь к \"ОФОРМИТЬ И В АРХИВ\"");
 }
 
 bool MoveHandler::TraverseMainProgramDir(const QString &_dirPath) // ДЛЯ БАЗОВОЙ ПАПКИ ОДНОЙ ПРОГРАММЫ
@@ -136,7 +136,7 @@ bool MoveHandler::TraverseMainProgramDir(const QString &_dirPath) // ДЛЯ БА
             {
                 Passport2KAnalyzer Passport;
                 QObject::connect(&Passport, SIGNAL(signalInfoToUIfailTextBox(QString)),
-                                 this, SIGNAL(signalToUIfailTextBox(QString)));
+                                 this, SIGNAL(signalInfoToUIfailTextBox(QString)));
                 if (Passport.Run(newPath))
                 {
                     if (Passport.DocumentsCount())
@@ -144,7 +144,7 @@ bool MoveHandler::TraverseMainProgramDir(const QString &_dirPath) // ДЛЯ БА
                         Passport.Initialize();
                         ExcelHandler excelHandler(this, this->path2Kexcel_);
                         QObject::connect(&excelHandler, SIGNAL(signalSeriesNotExist(QString)),
-                                         this, SIGNAL(signalToUIfailTextBox(QString)));
+                                         this, SIGNAL(signalInfoToUIfailTextBox(QString)));
                         const QVector<RowInExcelTable> &vRows = Passport.rowsInExcelTable();
                         Passport.QuitWord();
                         this->PassportCopy(docxPath, vRows.first().series());
@@ -176,8 +176,15 @@ bool MoveHandler::TraverseMainProgramDir(const QString &_dirPath) // ДЛЯ БА
                                             dir.mkdir(series);
                                         QDir dirInsideOneSeries(progsArchiveOneTester + ("/") + series);
                                         QStringList slProgramsDir(dirInsideOneSeries.entryList(QDir::Dirs));
-                                        while (slProgramsDir.contains(dirNameForMoving))
-                                            dirNameForMoving.append("_Newer");
+                                        if (slProgramsDir.contains(dirNameForMoving))
+                                        {
+//                                            if (dirNameForMoving.size() > 50)
+                                                dirNameForMoving.append(QString("_добавлена_").
+                                                                        append(QDateTime::currentDateTime().
+                                                                               toString("yyyy.MM.dd-hh-mm-ss")));
+//                                            else
+//                                                dirNameForMoving.append("_Newer");
+                                        }
                                         QString finishPath(dirInsideOneSeries.absolutePath().append("/").append(dirNameForMoving));
                                         dirInsideOneSeries.mkdir(finishPath);
                                         this->DirsCopy(_dirPath, finishPath);
@@ -190,11 +197,11 @@ bool MoveHandler::TraverseMainProgramDir(const QString &_dirPath) // ДЛЯ БА
                             markerForReturn = true;
                             emit this->signalInfoToUItrueTextBox(report);
                         }
-                    } else emit this->signalToUIfailTextBox(QString(_dirPath).append(" Проблема с word documents count == 0"));
-                } else emit this->signalToUIfailTextBox(QString(newPath).append(" Не создался Word.Application. Зови на помощь//MH"));
-            } else emit this->signalToUIfailTextBox(QString(" Проблема с CoInitializeEx() Зови на помощь"));
+                    } else emit this->signalInfoToUIfailTextBox(QString(_dirPath).append(" Проблема с word documents count == 0"));
+                } else emit this->signalInfoToUIfailTextBox(QString(newPath).append(" Не создался Word.Application. Зови на помощь//MH"));
+            } else emit this->signalInfoToUIfailTextBox(QString(" Проблема с CoInitializeEx() Зови на помощь"));
             CoUninitialize();
-        } else emit this->signalToUIfailTextBox(QString("В ").append(_dirPath).append(" не найден паспорт. Без паспорта не работаю"));
+        } else emit this->signalInfoToUIfailTextBox(QString("В ").append(_dirPath).append(" не найден паспорт. Без паспорта не работаю"));
     }
     return markerForReturn;
 }
@@ -237,15 +244,13 @@ void MoveHandler::DirsCopy(const QString &_dirPathFrom, const QString &_dirPathT
     const QDir dirFrom(_dirPathFrom);
     if (!dirFrom.exists())
     {
-        emit this->signalToUIfailTextBox(QString("Нет директории ").append(dirFrom.dirName()));
-        qDebug() << "No such directory : %s", dirFrom.dirName();
+        emit this->signalInfoToUIfailTextBox(QString("Нет директории ").append(dirFrom.dirName()));
         return;
     }
     const QDir dirTo(_dirPathTo);
     if (!dirTo.exists())
     {
-        emit this->signalToUIfailTextBox(QString("Нет директории ").append(dirTo.dirName()));
-        qDebug() << "No such directory : %s", dirTo.dirName();
+        emit this->signalInfoToUIfailTextBox(QString("Нет директории ").append(dirTo.dirName()));
         return;
     }
     QStringList slEntryDirFrom = dirFrom.entryList(QDir::Dirs);
@@ -281,12 +286,16 @@ void MoveHandler::PassportCopy(const QString &_pathFrom, const QString &_series)
     QDir dirPassport(this->path2Kdocs_);
     if (dirPassport.entryList(QDir::Dirs).contains(_series))
     {
-        while (QFile::exists(pathTo))
+        if (QFile::exists(pathTo))
         {
             QRegExp re("\.doc\w*");
             re.indexIn(pathTo);
             int pos = re.pos(0);
-            pathTo.insert(pos, "_Newer");
+
+            //            if (pathTo.size() > 50)
+            pathTo.insert(pos, QString("_добавлен_").append(QDateTime::currentDateTime().toString("yyyy.MM.dd-hh-mm-ss")));
+            //            else
+            //                pathTo.insert(pos, "_Newer");
         }
         QFile file(_pathFrom);
         file.copy(pathTo);
@@ -315,8 +324,6 @@ void MoveHandler::setPath2Kfrom(const QString &_path2Kfrom)
 
 void MoveHandler::slotStartOperations()
 {
-
-    Initialize(QCoreApplication::applicationDirPath().append("/ini.xml"));
     TraverseArchiveDir();
 }
 

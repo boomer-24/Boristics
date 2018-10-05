@@ -39,11 +39,9 @@ public slots:
 
 signals:
     void signalInfoToUItrueTextBox(QString info);
-    void signalToUIfailTextBox(QString infoErr);
-    void signalTraverseArchiveComplete();
-    void signalStart();
-    void signalFinish();
+    void signalInfoToUIfailTextBox(QString infoErr);
     void signalProgressToUI(int);
+    void signalTraverseArchiveComplete();
 };
 
 #endif // MOVEHANDLER_H

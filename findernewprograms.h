@@ -16,8 +16,7 @@ public:
 signals:
     void signalInfoToUInewProgramTrueTextBox(QString info);
     void signalInfoToUInewProgramFailTextBox(QString infoErr);
-    void signalFinish();
-    void signalStart();
+    void signalSearchNewProgramComplete();
     void signalCurrentSheetToUI(QString);
 
 public slots:

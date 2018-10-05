@@ -11,7 +11,6 @@
 #include <QSystemTrayIcon>
 #include <QAction>
 #include <QMessageBox>
-#include <thread>
 
 namespace Ui {
 class MainWindow;
@@ -31,19 +30,19 @@ private slots:
     void on_pushButton_ok_clicked();
     void on_pushButton_go_clicked();
     void on_pushButton_getNewPrograms_clicked();
-
     void on_pushButton_clearNewProgramsTextBox_clicked();
 
 public slots:
-    void slotInfoToUItrueTextBox(QString info);
-    void slotInfoToUIfailTextBox(QString infoError);
-    void slotAppendToNewProgram(QString infoNewProgram);
-    void slotAppendToNewProgramFail(QString _infoNewProgramFail);
-    void slotObtainCurrentSheetForUI(QString _element);
+    void slotInfoToUItrueTextBox(const QString& _info);
+    void slotInfoToUIfailTextBox(const QString& _infoError);
+    void slotAppendToNewProgram(const QString& _infoNewProgram);
+    void slotAppendToNewProgramFail(const QString& _infoNewProgramFail);
+    void slotObtainCurrentSheetForUI(const QString& _element);
+
+    void AutoRun(bool _isAutorun);
 
 signals:
-    void signalStartOperation();
-    void signalStartOperationFindNewProgram();
+    void signalStartOperation();    
     void signalStartOperationFindNewProgram(QString,QDate);
 
 protected:
@@ -58,6 +57,7 @@ private:
     QThread *thread_;
     QThread *threadNewPrograms_;
     QString path2Kfrom_, path2Kdocs_, path2Kprgs_, path2Kexcel_;
+    bool autorun_;
 };
 
 #endif // MAINWINDOW_H

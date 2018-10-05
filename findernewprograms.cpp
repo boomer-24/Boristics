@@ -11,7 +11,6 @@ void FinderNewPrograms::slotStartOperation(const QString& _excelPath, const QDat
     if (ini == 0 || 1)
     {
         this->isExcelBusy_ = true;
-        emit this->signalStart();
         ExcelHandler EH(this, _excelPath);
         QObject::connect(&EH, SIGNAL(signalInfoToUInewProgramTextBox(QString)),
                          this, SIGNAL(signalInfoToUInewProgramTrueTextBox(QString)));
@@ -20,7 +19,7 @@ void FinderNewPrograms::slotStartOperation(const QString& _excelPath, const QDat
         QObject::connect(&EH, SIGNAL(signalCurrentSheetToUI(QString)),
                          this, SIGNAL(signalCurrentSheetToUI(QString)));
         EH.getNewProgram(_date);
-        emit this->signalFinish();
+        emit this->signalSearchNewProgramComplete();
         this->isExcelBusy_ = false;
     } else emit this->signalInfoToUInewProgramFailTextBox(QString(" Проблема с CoInitializeEx() Зови на помощь"));
 }
