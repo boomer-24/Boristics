@@ -247,7 +247,7 @@ QPair<bool, bool> ExcelHandler::isFitDateFind(const QString &_dateFromTable, con
 void ExcelHandler::getNewProgram(const QDate _dateSelected)
 {
     if (!excelApp_->isNull())
-    {        
+    {
         QAxObject* sheets = this->workbook_->querySubObject("Worksheets");
         int countSheets = sheets->property("Count").toInt();
         for (int i = 1; i < countSheets; i++)
@@ -294,6 +294,8 @@ void ExcelHandler::getNewProgram(const QDate _dateSelected)
                     emit this->signalInfoToUInewProgramFailTextBox(QString("fail with ").append(valueName.toString()));
                 }
             }
-        }        
+        }
+        emit this->signalInfoToUInewProgramTextBox("");
+        emit this->signalInfoToUInewProgramFailTextBox("");
     }
 }

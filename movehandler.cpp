@@ -77,7 +77,9 @@ void MoveHandler::TraverseArchiveDir()
                 emit this->signalProgressToUI(((i + 1) * 100) / slEntryDir.size());
             }
             this->isExcelBusy_ = false;
-            emit this->signalInfoToUItrueTextBox("!!! ОБРАБОТКА ОФОРМИТЬ И В АРХИВ ЗАВЕРШЕНА !!!");
+            emit this->signalInfoToUItrueTextBox("ОБРАБОТКА ОФОРМИТЬ И В АРХИВ ЗАВЕРШЕНА");
+            emit this->signalInfoToUItrueTextBox("");
+            emit this->signalInfoToUIfailTextBox("");
             emit this->signalTraverseArchiveComplete();
         }
     } else emit this->signalInfoToUIfailTextBox("Укажи в ini.xml путь к \"ОФОРМИТЬ И В АРХИВ\"");
@@ -107,7 +109,9 @@ void MoveHandler::TraverseArchiveDir(const QString &_dirPath) //    ПЕРЕДА
                 emit this->signalProgressToUI(((i + 1) * 100) / slEntryDir.size());
             }
             this->isExcelBusy_ = false;
-            emit this->signalInfoToUItrueTextBox("!!! ОБРАБОТКА ОФОРМИТЬ И В АРХИВ ЗАВЕРШЕНА !!!");
+            emit this->signalInfoToUItrueTextBox("ОБРАБОТКА ОФОРМИТЬ И В АРХИВ ЗАВЕРШЕНА");
+            emit this->signalInfoToUItrueTextBox("");
+            emit this->signalInfoToUIfailTextBox("");
             emit this->signalTraverseArchiveComplete();
         }
     } else emit this->signalInfoToUIfailTextBox("Укажи в ini.xml путь к \"ОФОРМИТЬ И В АРХИВ\"");

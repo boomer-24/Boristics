@@ -31,6 +31,7 @@ public:
     int GetMaxValueFromMap(QList<int> _list);
     QPair<bool, bool> isFitDateFind(const QString &_dateFromTable, const QDate &_dateSelected); //first bool - isFit date, second - isFail
     void getNewProgram(const QDate _dateSelected);
+
 signals:
     void signalSeriesNotExist(const QString& _info);
     void signalInfoToUInewProgramTextBox(QString _info);

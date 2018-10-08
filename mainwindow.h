@@ -11,6 +11,7 @@
 #include <QSystemTrayIcon>
 #include <QAction>
 #include <QMessageBox>
+#include <QTimer>
 
 namespace Ui {
 class MainWindow;
@@ -24,13 +25,18 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     void Initialize(const QString &_xmlPath);
+    void AutoRun(bool _isAutorun) const;
+    void WriteXML(const QString &_xmlPath);
 
 private slots:
-    void iconActivated(QSystemTrayIcon::ActivationReason _reason);
-    void on_pushButton_ok_clicked();
+    void iconActivated(QSystemTrayIcon::ActivationReason _reason);    
     void on_pushButton_go_clicked();
     void on_pushButton_getNewPrograms_clicked();
     void on_pushButton_clearNewProgramsTextBox_clicked();
+    void on_pushButton_clearNewProgramsFailTextBox_clicked();
+    void on_pushButton_savePaths_clicked();
+
+    void on_pushButton_ok_clicked();
 
 public slots:
     void slotInfoToUItrueTextBox(const QString& _info);
@@ -38,8 +44,8 @@ public slots:
     void slotAppendToNewProgram(const QString& _infoNewProgram);
     void slotAppendToNewProgramFail(const QString& _infoNewProgramFail);
     void slotObtainCurrentSheetForUI(const QString& _element);
-
-    void AutoRun(bool _isAutorun);
+    void slotBalloonClickedGetNewPtogramShow();
+    void slotShowNoticeAboutNewProgram();
 
 signals:
     void signalStartOperation();    
@@ -57,7 +63,9 @@ private:
     QThread *thread_;
     QThread *threadNewPrograms_;
     QString path2Kfrom_, path2Kdocs_, path2Kprgs_, path2Kexcel_;
-    bool autorun_;
+    bool autorun_, needForReminders_;
+    QTimer timer_;
+    int reminderFrequencyMinutes_, dayBoard_;
 };
 
 #endif // MAINWINDOW_H
